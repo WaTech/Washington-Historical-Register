@@ -1,0 +1,243 @@
+<!--
+Copyright (C) 2012 Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!doctype html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Historical Register Glass Test</title>
+
+  <link href="/static/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+  <link href="/static/bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet" media="screen">
+  <link href="/static/main.css" rel="stylesheet" media="screen">
+</head>
+
+<body>
+
+<div class="navbar navbar-inverse navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="#">Historical Register Glass Test</a>
+
+      <div class="nav-collapse collapse">
+        <form class="navbar-form pull-right" action="/signout" method="post">
+          <button type="submit" class="btn">Sign out</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="container">
+
+  {% if message %}
+      <div class="alert alert-info">{{ message }}</div>
+  {% endif %}
+
+  <h1>Your Recent Timeline</h1>
+
+  <div class="row">
+
+    <div style="margin-top: 5px;">
+
+      {% if timelineItems %}
+        {% for timelineItem in timelineItems %}
+            <div class="span4">
+              <table class="table table-bordered">
+                <tbody>
+
+                  <tr>
+                    <th>ID</th>
+                    <td>{{ timelineItem.id }}</td>
+                  </tr>
+
+                  {% if timelineItem.text %}
+                      <tr>
+                        <th>Text</th>
+                        <td>{{ timelineItem.text|e }}</td>
+                      </tr>
+                  {% endif %}
+
+                  {% if timelineItem.html %}
+                      <tr>
+                        <th>HTML</th>
+                        <td>{{ timelineItem.html|e }}</td>
+                      </tr>
+                  {% endif %}
+
+                  {% if timelineItem.attachments %}
+                      <tr>
+                        <th>Attachments</th>
+                        <td>
+                          {% for attachment in timelineItem.attachments %}
+                            {% if attachment.contentType.startswith('image') %}
+                            <img src="/attachmentproxy?attachment={{ attachment.id }}&timelineItem={{ timelineItem.id }}">
+                            {% else %}
+                            <a href="/attachmentproxy?attachment={{ attachment.id }}&timelineItem={{ timelineItem.id }}">Download</a>
+                            {% endif %}
+                          {% endfor %}
+                        </td>
+                      </tr>
+                  {% endif %}
+
+
+
+                  {% if timelineItem.attachments %}
+                  <tr>
+                    <th>BundleId</th>
+                    <td>{{ timelineItem.bundleId|e }}</td>
+                  </tr>
+                  {%  endif %}
+
+                  <tr>
+                    <th>Created</th>
+                    <td>{{ timelineItem.created|e }}</td>
+                  </tr>
+
+                  <tr>
+                    <td colspan="2">
+                      <form action="/" method="post">
+                        <input type="hidden" name="itemId" value="{{ timelineItem.id }}">
+                        <input type="hidden" name="operation" value="deleteTimelineItem">
+                        <button class="btn btn-block btn-danger" type="submit">
+                          Delete Item
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+
+                </tbody>
+              </table>
+            </div>
+        {% endfor %}
+
+      {% else %}
+          <div class="span12">
+            <div class="alert alert-info">
+              You haven't added any items to your timeline yet. Use the controls
+              below to add something!
+            </div>
+          </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row">
+    <hr/>
+
+    <div class="span4 ">
+      <h2>Timeline</h2>
+      <p>Timeline API: <a href="https://developers.google.com/glass/timeline">here</a>.</p>
+
+      <form action="/" method="post">
+        <input type="hidden" name="operation" value="propertiesForLocation">
+        Latitude: <input type="text" size="10" name="latitude" class="span4" value="-122.889816553" /><br/>
+        Longitude: <input type="text" size="10" name="longitude" class="span4" value="47.048779572" /><br/>
+        Range (mi): <input type="text" size="10" name="dist" class="span4" value="0.1" /><br/>
+
+        <button class="btn btn-block" type="submit">
+          Insert the above message
+        </button>
+       </form>
+
+
+      <form action="/" method="post" onsubmit="return confirm('Are you sure you want to clear your timeline?')">
+        <input type="hidden" name="operation" value="clearTimeline">
+        <button class="btn btn-block" type="submit">
+          Clear Timeline (USE WITH CAUTION)
+        </button>
+       </form>
+
+
+
+    </div>
+
+    <div class="span4">
+      <h2>Contacts</h2>
+      <p>Contact API: <a href="https://developers.google.com/glass/contacts">here</a>.</p>
+
+      {% if contact %}
+          <form action="/" method="post">
+            <input type="hidden" name="operation" value="deleteContact">
+            <input type="hidden" name="id" value="washington-historic-register">
+            <button class="btn btn-block btn-danger" type="submit">
+              Delete "Historic Register" Contact
+            </button>
+          </form>
+      {% else %}
+          <form action="/" method="post">
+            <input type="hidden" name="operation" value="insertContact">
+            <input type="hidden" name="imageUrl" value="/static/images/dahp-logo-trans.png">
+            <input type="hidden" name="name" value="Washington Historic Register">
+            <input type="hidden" name="id" value="washington-historic-register">
+            <button class="btn btn-block btn-success" type="submit">
+              Insert "Historic Register" Contact
+            </button>
+          </form>
+      {% endif %}
+
+
+
+
+      <h2>Subscriptions</h2>
+      <p>Subscription API: <a href="https://developers.google.com/glass/subscriptions">here</a>.</p>
+
+      {% if timelineSubscriptionExists %}
+          <form action="/" method="post">
+            <input type="hidden" name="subscriptionId" value="timeline">
+            <input type="hidden" name="operation" value="deleteSubscription">
+            <button class="btn btn-block btn-danger" type="submit">
+              Unsubscribe from timeline updates
+            </button>
+          </form>
+      {% else %}
+          <form action="/" method="post">
+            <input type="hidden" name="operation" value="insertSubscription">
+            <input type="hidden" name="collection" value="timeline">
+            <button class="btn btn-block btn-success" type="submit">
+              Subscribe to timeline updates
+            </button>
+          </form>
+      {% endif %}
+
+      {% if locationSubscriptionExists %}
+          <form action="/" method="post">
+            <input type="hidden" name="operation" value="deleteSubscription">
+            <input type="hidden" name="subscriptionId" value="locations">
+            <button class="btn btn-block btn-danger" type="submit">
+              Unsubscribe from location updates
+            </button>
+          </form>
+      {% else %}
+          <form action="/" method="post">
+            <input type="hidden" name="operation" value="insertSubscription">
+            <input type="hidden" name="collection" value="locations">
+            <button class="btn btn-block btn-success" type="submit">
+              Subscribe to location updates
+            </button>
+          </form>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="/static/bootstrap/js/bootstrap.min.js"></script>
+
+</body>
+</html>

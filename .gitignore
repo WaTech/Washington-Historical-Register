@@ -1,0 +1,4 @@
+*.pyc
+client_secrets.json
+session.secret
+app.yaml
